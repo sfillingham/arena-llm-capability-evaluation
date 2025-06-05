@@ -1,5 +1,5 @@
 # arena-llm-capability-evaluation
-Development of AI capability evaluations using Inspect from AISI
+Development of AI capability evaluations using [Inspect](https://inspect.aisi.org.uk/) from AISI
 
 In this currently ongoing project, I generally follow the flow of [Chapter 3](https://arena3-chapter3-llm-evals.streamlit.app/) in the [ARENA](https://www.arena.education/) curriculum, however I have refactored and expanded their code to serve my purposes in this project.
 
