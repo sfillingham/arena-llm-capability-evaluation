@@ -15,6 +15,11 @@ As a secondary component, I utilize an older (Claude-3.7) model to assist in dev
 - Model Comparison: Testing across multiple frontier models (GPT-4.1, Claude-4, etc.)
 
 ## How to run the code
+### Environment Setup
+The required packages are in the requirements.txt file
+'''
+pip install -r requirements.txt
+'''
 
 ## Current Results and Ongoing Work
 
