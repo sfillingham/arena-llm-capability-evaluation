@@ -17,9 +17,9 @@ As a secondary component, I utilize an older (Claude-3.7) model to assist in dev
 ## How to run the code
 ### Environment Setup
 The required packages are in the requirements.txt file
-'''
+```
 pip install -r requirements.txt
-'''
+```
 
 ## Current Results and Ongoing Work
 
