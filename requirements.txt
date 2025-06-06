@@ -1,1 +1,7 @@
-# Packages and dependencies
+openai
+anthropic
+inspect_ai
+tabulate
+wikipedia
+jaxtyping
+python-dotenv
