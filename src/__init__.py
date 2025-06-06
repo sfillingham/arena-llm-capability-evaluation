@@ -15,9 +15,8 @@ __author__ = "Sean P. Fillingham"
 
 # Core functionality imports
 from .question_generation import (
-    generate_political_questions,
-    validate_question_format,
-    save_question_set
+    retry_with_exponential_backoff,
+    generate_structured_response
 )
 
 from .inspect_evaluation import (
@@ -33,17 +32,16 @@ from .statistical_analysis import (
 )
 
 from .utils import (
-    load_json,
-    save_results,
-    format_results_table
+    add_few_shot_examples,
+    add_variance_prompts,
+    GenPrompts
 )
 
 # Main workflow functions
 __all__ = [
     # Question generation
-    "generate_political_questions",
-    "validate_question_format", 
-    "save_question_set",
+    "retry_with_exponential_backoff",
+    "generate_structured_response",
     
     # Evaluation
     "run_inspect_evaluation",
@@ -56,7 +54,7 @@ __all__ = [
     "generate_comparison_report",
     
     # Utilities
-    "load_json",
-    "save_results", 
-    "format_results_table"
+    "add_few_shot_examples",
+    "add_variance_prompts", 
+    "GenPrompts"
 ]

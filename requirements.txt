@@ -5,3 +5,4 @@ tabulate
 wikipedia
 jaxtyping
 python-dotenv
+instructor
