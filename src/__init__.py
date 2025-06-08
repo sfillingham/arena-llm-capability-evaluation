@@ -16,7 +16,8 @@ __author__ = "Sean P. Fillingham"
 # Core functionality imports
 from .question_generation import (
     retry_with_exponential_backoff,
-    generate_structured_response
+    generate_structured_response,
+    generate_structured_responses_with_threadpool
 )
 
 from .inspect_evaluation import (
@@ -42,6 +43,7 @@ __all__ = [
     # Question generation
     "retry_with_exponential_backoff",
     "generate_structured_response",
+    "generate_structured_responses_with_threadpool",
     
     # Evaluation
     "run_inspect_evaluation",

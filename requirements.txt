@@ -6,3 +6,4 @@ wikipedia
 jaxtyping
 python-dotenv
 instructor
+"instructor[anthropic]"

@@ -4,12 +4,13 @@ import time
 import warnings
 from tabulate import tabulate # type: ignore
 import instructor # type: ignore
+from anthropic import Anthropic #type: ignore
 from concurrent.futures import ThreadPoolExecutor
-
 
 Message: TypeAlias = dict[Literal["role", "content"], str]
 Messages: TypeAlias = list[Message]
 
+#anthropic_client = Anthropic()
 
 def retry_with_exponential_backoff(
     func,
@@ -61,6 +62,7 @@ def retry_with_exponential_backoff(
     return wrapper
 
 
+@retry_with_exponential_backoff
 def generate_structured_response(
     model: str,
     messages: Messages, # type: ignore
@@ -108,7 +110,7 @@ def generate_structured_response(
             kwargs = {"system": messages[0]["content"]} if has_system else {}
             msgs = messages[1:] if has_system else messages
 
-            response = instructor.from_anthropic(client=anthropic_client).messages.create(
+            response = instructor.from_anthropic(client=Anthropic()).messages.create(
                 model=model,
                 messages=msgs,
                 temperature=temperature,
@@ -125,6 +127,7 @@ def generate_structured_response(
         raise RuntimeError(f"Error in generation:\n{e}") from e
     
 
+@retry_with_exponential_backoff
 def generate_structured_responses_with_threadpool(
     model: str,
     messages_list: list[Messages],
