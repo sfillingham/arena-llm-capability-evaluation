@@ -36,7 +36,8 @@ from .statistical_analysis import (
 from .utils import (
     add_few_shot_examples,
     add_variance_prompts,
-    GenPrompts
+    GenPrompts,
+    pretty_print_questions
 )
 
 # Main workflow functions
@@ -60,5 +61,6 @@ __all__ = [
     # Utilities
     "add_few_shot_examples",
     "add_variance_prompts", 
-    "GenPrompts"
+    "GenPrompts",
+    "pretty_print_questions"
 ]
