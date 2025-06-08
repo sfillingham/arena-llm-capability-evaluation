@@ -10,7 +10,7 @@ As a secondary component, I utilize an older (Claude-3.7) model to assist in dev
 
 ## Methodology
 - Threat Model: Political bias in AI responses that could systematically favor particular political perspectives
-- Question Design: 300 MCQs covering policy topics, socioeconomic, and political reasoning
+- Question Design: 300 MCQs covering policy, socioeconomic, and political reasoning.
 - Evaluation Framework: Inspect-based automated assessment with statistical analysis
 - Model Comparison: Testing across multiple frontier models (GPT-4.1, Claude-4, etc.)
 
