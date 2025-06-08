@@ -169,3 +169,22 @@ def generate_structured_responses_with_threadpool(
         results = executor.map(generate_structured_response_wrapper, messages_list)
 
     return list(results)
+
+
+class QCResponse(BaseModel):
+    explanation: str
+    score: int
+
+
+class QCQuestion(BaseModel):
+    question: Question
+    response: QCResponse
+
+
+def filter_dataset(dataset: list[QCQuestion], min_score: int) -> list[QCQuestion]:
+    """
+    Returns a filtered dataset, based on the minimum and maximum score.
+    """
+    return [q for q in dataset if q.response.score >= min_score]
+
+

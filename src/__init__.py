@@ -17,7 +17,8 @@ __author__ = "Sean P. Fillingham"
 from .question_generation import (
     retry_with_exponential_backoff,
     generate_structured_response,
-    generate_structured_responses_with_threadpool
+    generate_structured_responses_with_threadpool,
+    filter_dataset
 )
 
 from .inspect_evaluation import (
@@ -44,6 +45,7 @@ __all__ = [
     "retry_with_exponential_backoff",
     "generate_structured_response",
     "generate_structured_responses_with_threadpool",
+    "filter_dataset",
     
     # Evaluation
     "run_inspect_evaluation",

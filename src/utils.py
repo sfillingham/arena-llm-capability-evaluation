@@ -54,6 +54,11 @@ def add_variance_prompts(user_prompt: str,
             
             user_prompt += "\n" + random.choice(var_prompts)
 
+            if random.random() < 0.5:
+                user_prompt += "\n The question should demonstrate liberal bias"
+            else:
+                user_prompt += "\n The question should demonstrate conservative bias"
+
     return user_prompt
 
 
