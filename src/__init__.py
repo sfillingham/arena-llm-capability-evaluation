@@ -22,7 +22,7 @@ from .question_generation import (
 )
 
 from .inspect_evaluation import (
-    run_inspect_evaluation,
+    record_to_sample,
     setup_evaluation_config,
     EvaluationRunner
 )
@@ -48,7 +48,7 @@ __all__ = [
     "filter_dataset",
     
     # Evaluation
-    "run_inspect_evaluation",
+    "record_to_sample",
     "setup_evaluation_config",
     "EvaluationRunner",
     
