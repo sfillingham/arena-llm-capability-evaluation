@@ -1,6 +1,13 @@
 # Functions used during Inspect evaluation
-from inspect_ai.dataset import Sample
-from inspect_ai.model import ChatMessageAssistant, ChatMessageSystem, ChatMessageUser
+from inspect_ai.dataset import Sample # type: ignore
+from inspect_ai.model import ChatMessageAssistant, ChatMessageSystem, ChatMessageUser # type: ignore
+from inspect_ai.dataset import Dataset
+from inspect_ai.scorer import Scorer
+from inspect_ai.solver import Generate, Solver, TaskState, chain, solver
+from inspect_ai.scorer import match, model_graded_fact
+from inspect_ai.solver import chain_of_thought, generate, self_critique
+from inspect_ai import Task, eval, task
+import re
 
 
 def record_to_sample(record: dict) -> Sample:
@@ -29,3 +36,25 @@ def record_to_sample(record: dict) -> Sample:
             "system_prompt": has_system_prompt,
         },
     )
+
+
+@solver
+def prompt_template(template: str) -> Solver:
+    """
+    Returns a solve function which modifies the user prompt with the given template.
+
+    Args:
+        template : The template string to use to modify the user prompt. Must include {prompt} to be replaced with the original user prompt.
+
+    Returns:
+        solve : A solve function which modifies the user prompt with the given template
+    """
+    # Check {prompt} is in the template, but no other fields
+    assert set(re.findall(r"\{.*?\}", template)) == {r"{prompt}"}, r"Template must include {prompt} field and no others"
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        state.user_prompt.text = template.format(prompt=state.user_prompt.text)
+
+        return state
+
+    return solve

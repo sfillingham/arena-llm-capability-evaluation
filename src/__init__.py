@@ -23,7 +23,7 @@ from .question_generation import (
 
 from .inspect_evaluation import (
     record_to_sample,
-    setup_evaluation_config,
+    prompt_template,
     EvaluationRunner
 )
 
@@ -49,7 +49,7 @@ __all__ = [
     
     # Evaluation
     "record_to_sample",
-    "setup_evaluation_config",
+    "prompt_template",
     "EvaluationRunner",
     
     # Analysis
