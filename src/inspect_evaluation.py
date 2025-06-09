@@ -1,11 +1,12 @@
 # Functions used during Inspect evaluation
 from inspect_ai.dataset import Sample, Dataset # type: ignore
-from inspect_ai.model import ChatMessageAssistant, ChatMessageSystem, ChatMessageUser # type: ignore
-from inspect_ai.scorer import Scorer, match, model_graded_fact
-from inspect_ai.solver import Generate, Solver, TaskState, chain, solver, chain_of_thought, generate, self_critique
+from inspect_ai.model import ChatMessageAssistant, ChatMessageSystem, ChatMessageUser, get_model # type: ignore
+from inspect_ai.scorer import Scorer, match, model_graded_fact, answer # type: ignore
+from inspect_ai.solver import Generate, Solver, TaskState, chain, solver, chain_of_thought, generate, self_critique, Choices # type: ignore
 
 from inspect_ai import Task, eval, task # type: ignore
 import re
+import random
 
 
 def record_to_sample(record: dict) -> Sample:
@@ -36,6 +37,48 @@ def record_to_sample(record: dict) -> Sample:
     )
 
 
+def record_to_sample_full(record: dict, system_prompt_behavior: Literal["system", "context"] | None = None) -> Sample:
+    """
+    Converts a item ("record") from the dataset into a Sample object, mapping the fields of the record to the fields
+    of the Sample object.
+
+    Difference from previous function: we randomly shuffle the order of the 2 presented choices.
+
+    Args:
+        record : A dictionary from the json dataset containing our evaluation questions
+
+    Returns:
+        Sample : A Sample object containing the information in the record
+    """
+    input = [ChatMessageUser(content=record["question"])]
+
+    # Here is the changed code from `record_to_sample_shuffle`: we change the system prompt behaviour
+    has_system_prompt = record.get("system", "") != "" and system_prompt_behavior is not None
+    if has_system_prompt:
+        if system_prompt_behavior == "system":
+            input.insert(0, ChatMessageSystem(content=record["system"]))
+        elif system_prompt_behavior == "context":
+            input.insert(0, ChatMessageUser(content=f"Context:\n{record['system']}\n\n{record['question']}"))
+
+    choices = list(record["answers"].values())
+    if random.choice([True, False]):
+        choices = list(reversed(choices))
+        target = record["answer_not_matching_behavior"]
+    else:
+        target = record["answer_matching_behavior"]
+
+    return Sample(
+        input=input,
+        target=target,
+        choices=choices,
+        metadata={
+            "labels": list(record["answers"].keys()),
+            "behavior_category": record["behavior_category"],
+            "system_prompt": has_system_prompt,
+        },
+    )
+
+
 @solver
 def prompt_template(template: str) -> Solver:
     """
@@ -52,6 +95,110 @@ def prompt_template(template: str) -> Solver:
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         state.user_prompt.text = template.format(prompt=state.user_prompt.text)
+
+        return state
+
+    return solve
+
+
+def letters_and_answer_options(choices: Choices) -> tuple[str, str]:
+    """
+    Helper function, returns `choices` formatted as MCQ options, as well as the string of labels for each option.
+
+    Example:
+
+        ["choice 1", "choice 2", "choice 3"] -> (
+            "A) choice 1\nB) choice 2\nC) choice 3",
+            "A, B, C"
+        )
+    """
+    letters = [chr(65 + i) for i in range(len(choices))]
+
+    return (
+        ", ".join(letters),
+        "\n".join([f"{letter}) {choice.value}" for letter, choice in zip(letters, choices)]),
+    )
+
+
+@solver
+def multiple_choice_format(template: str) -> Solver:
+    """
+    Returns a solve function which modifies the initial prompt to be in the format of an MCQ.
+
+    Args:
+        template: The template string to use to modify the user prompt. Must include {question} and {choices} to be replaced with the original user prompt and the answer choices, respectively.
+
+    Returns:
+        solve: A solve function which modifies the user prompt with the given template
+    """
+    tags = set(re.findall(r"\{.*?\}", template))
+    assert r"{question}" in tags, "Template must include {question} field"
+    assert r"{choices}" in tags, "Template must include {choices} field"
+    assert tags - {r"{question}", r"{choices}", r"{letters}"} == set(), "Unexpected field found in template"
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        assert state.choices, "If using MCQ then state must have `choices` field"
+
+        letters, choices = letters_and_answer_options(state.choices)
+        state.user_prompt.text = template.format(question=state.user_prompt.text, choices=choices, letters=letters)
+
+        return state
+
+    return solve
+
+
+@solver
+def make_choice(prompt: str) -> Solver:
+    """
+    Returns a solve function which adds a user message at the end of the state.messages list with the given prompt.
+
+    Args:
+        prompt : The prompt to add to the user messages (this will be an instruction to make a final choice).
+
+    Returns:
+        solve : A solve function which adds a user message with the given prompt to the end of the state.messages list
+    """
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        letters, _ = letters_and_answer_options(state.choices)
+        state.messages.append(ChatMessageUser(content=prompt.format(letters=letters)))
+
+        return state
+
+    return solve
+
+
+@solver
+def self_critique_format(
+    model_id: str,
+    critique_template: str | None = TEMPLATE_MCQ_CRITIQUE,
+    critique_completion_template: str | None = TEMPLATE_MCQ_CRITIQUE_COMPLETION,
+) -> Solver:
+    """
+    Generates a self-critique of the model's answer, as well as a new response based on the critique.
+
+    Args:
+        - model: The model we use to generate the self-critique
+        - critique_template: Template asking model to produce a critique of the answer
+        - critique_completion_template: Template asking model to generate a new improved answer based on the critique
+    """
+    model = get_model(model_id)
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        # (1) Generate a critique of the model's answer
+        letters, choices = letters_and_answer_options(state.choices)
+        kwargs = dict(
+            question=state.input_text,
+            choices=choices,
+            completion=state.output.completion,
+            letters=letters,
+        )
+        critique = await model.generate(critique_template.format(**kwargs))
+
+        # (2) Insert this critique into a new user message, at the end of current chat history
+        state.messages.append(
+            ChatMessageUser(content=critique_completion_template.format(**kwargs, critique=critique.completion))
+        )
 
         return state
 

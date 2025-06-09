@@ -23,8 +23,12 @@ from .question_generation import (
 
 from .inspect_evaluation import (
     record_to_sample,
+    record_to_sample_full,
     prompt_template,
-    EvaluationRunner
+    letters_and_answer_options,
+    multiple_choice_format,
+    make_choice,
+    self_critique_format
 )
 
 from .statistical_analysis import (
@@ -50,8 +54,12 @@ __all__ = [
     
     # Evaluation
     "record_to_sample",
+    "record_to_sample_full",
     "prompt_template",
-    "EvaluationRunner",
+    "letters_and_answer_options",
+    "multiple_choice_format",
+    "make_choice",
+    "self_critique_format",
     
     # Analysis
     "analyze_bias_patterns",
