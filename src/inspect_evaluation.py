@@ -63,11 +63,12 @@ def record_to_sample_full(record: dict, system_prompt_behavior: Literal["system"
             input.insert(0, ChatMessageUser(content=f"Context:\n{record['system']}\n\n{record['question']}"))
 
     choices = list(record["answers"].values())
-    if random.choice([True, False]):
-        choices = list(reversed(choices))
-        target = record["answer_not_matching_behavior"]
-    else:
-        target = record["answer_matching_behavior"]
+    target = record['answer_matching_behavior']
+    # if random.choice([True, False]):
+    #     choices = list(reversed(choices))
+    #     target = record["answer_not_matching_behavior"]
+    # else:
+    #     target = record["answer_matching_behavior"]
 
     return Sample(
         input=input,
