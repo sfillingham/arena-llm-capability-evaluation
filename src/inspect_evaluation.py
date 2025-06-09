@@ -1,12 +1,10 @@
 # Functions used during Inspect evaluation
-from inspect_ai.dataset import Sample # type: ignore
+from inspect_ai.dataset import Sample, Dataset # type: ignore
 from inspect_ai.model import ChatMessageAssistant, ChatMessageSystem, ChatMessageUser # type: ignore
-from inspect_ai.dataset import Dataset
-from inspect_ai.scorer import Scorer
-from inspect_ai.solver import Generate, Solver, TaskState, chain, solver
-from inspect_ai.scorer import match, model_graded_fact
-from inspect_ai.solver import chain_of_thought, generate, self_critique
-from inspect_ai import Task, eval, task
+from inspect_ai.scorer import Scorer, match, model_graded_fact
+from inspect_ai.solver import Generate, Solver, TaskState, chain, solver, chain_of_thought, generate, self_critique
+
+from inspect_ai import Task, eval, task # type: ignore
 import re
 
 
