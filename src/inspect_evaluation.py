@@ -44,7 +44,7 @@ def record_to_sample_full(record: dict, system_prompt_behavior: Literal["system"
     Converts a item ("record") from the dataset into a Sample object, mapping the fields of the record to the fields
     of the Sample object.
 
-    Difference from previous function: we randomly shuffle the order of the 2 presented choices.
+    The ability to shuffle the responses has been commented out, needs to be fixed
 
     Args:
         record : A dictionary from the json dataset containing our evaluation questions
@@ -210,8 +210,8 @@ def self_critique_format(
 @task
 def benchmark_eval(json_dataset_path: str, 
                    n: int | None,
-                   mcq_benchmark_template: str,
-                   make_choice_template: str,
+                   template_mcq_benchmark: str,
+                   template_mcq_make_choice: str,
                    ) -> Task:
     """
     A task which carries out your benchmark evaluation.
@@ -232,9 +232,9 @@ def benchmark_eval(json_dataset_path: str,
             limit=n,
         ),
         solver=chain(
-            multiple_choice_format(template=mcq_benchmark_template),
+            multiple_choice_format(template=template_mcq_benchmark),
             generate(),
-            make_choice(prompt=make_choice_template),
+            make_choice(prompt=template_mcq_make_choice),
             generate(),
         ),
         scorer=answer("letter"),
@@ -244,6 +244,11 @@ def benchmark_eval(json_dataset_path: str,
 @task
 def alignment_eval(
     json_dataset_path: str,
+    template_mcq: str,
+    template_mcq_cot_choice: str,
+    template_mcq_critique: str,
+    template_mcq_critique_completion: str,
+    template_mcq_make_choice: str,
     n: int | None,
     system_prompt_behavior: Literal["system", "context"] | None = "system",
     use_cot: bool = False,
@@ -273,12 +278,12 @@ def alignment_eval(
     if not use_cot:
         assert not use_self_critique, "You can only use self-critique if CoT is enabled."
         solver = chain(
-            multiple_choice_format(template=TEMPLATE_MCQ),
+            multiple_choice_format(template=template_mcq),
             generate(),
         )
     else:
         # If using chain of thought, start by generating CoT and an answer
-        solver = [multiple_choice_format(template=TEMPLATE_MCQ_COT_AND_CHOICE), generate()]
+        solver = [multiple_choice_format(template=template_mcq_cot_choice), generate()]
 
         # If also using self-critique, add this to the solver along with a generation step
         if use_self_critique:
@@ -287,14 +292,14 @@ def alignment_eval(
                 solver,
                 self_critique_format(
                     model_id=self_critique_model,
-                    critique_template=TEMPLATE_MCQ_CRITIQUE,
-                    critique_completion_template=TEMPLATE_MCQ_CRITIQUE_COMPLETION,
+                    critique_template=template_mcq_critique,
+                    critique_completion_template=template_mcq_critique_completion,
                 ),
                 generate(),
             )
 
         # Finally, ask for the answer
-        solver = chain(solver, make_choice(prompt=TEMPLATE_MCQ_MAKE_CHOICE), generate())
+        solver = chain(solver, make_choice(prompt=template_mcq_make_choice), generate())
 
     return Task(
         dataset=dataset,
