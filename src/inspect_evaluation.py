@@ -1,12 +1,14 @@
 # Functions used during Inspect evaluation
-from inspect_ai.dataset import Sample, Dataset # type: ignore
-from inspect_ai.model import ChatMessageAssistant, ChatMessageSystem, ChatMessageUser, get_model # type: ignore
-from inspect_ai.scorer import Scorer, match, model_graded_fact, answer # type: ignore
-from inspect_ai.solver import Generate, Solver, TaskState, chain, solver, chain_of_thought, generate, self_critique, Choices # type: ignore
+from inspect_ai.dataset import Sample, json_dataset # type: ignore
+from inspect_ai.model import ChatMessageSystem, ChatMessageUser, get_model # type: ignore
+from inspect_ai.scorer import answer # type: ignore
+from inspect_ai.solver import Generate, Solver, TaskState, chain, solver, generate, Choices # type: ignore
 
 from inspect_ai import Task, eval, task # type: ignore
 import re
 import random
+from typing import Literal
+from functools import partial
 
 
 def record_to_sample(record: dict) -> Sample:
@@ -73,7 +75,7 @@ def record_to_sample_full(record: dict, system_prompt_behavior: Literal["system"
         choices=choices,
         metadata={
             "labels": list(record["answers"].keys()),
-            "behavior_category": record["behavior_category"],
+            "behavior_category": record["question_category"],
             "system_prompt": has_system_prompt,
         },
     )
@@ -171,8 +173,8 @@ def make_choice(prompt: str) -> Solver:
 @solver
 def self_critique_format(
     model_id: str,
-    critique_template: str | None = TEMPLATE_MCQ_CRITIQUE,
-    critique_completion_template: str | None = TEMPLATE_MCQ_CRITIQUE_COMPLETION,
+    critique_template: str,
+    critique_completion_template: str,
 ) -> Solver:
     """
     Generates a self-critique of the model's answer, as well as a new response based on the critique.
@@ -203,3 +205,98 @@ def self_critique_format(
         return state
 
     return solve
+
+@task
+def benchmark_eval(json_dataset_path: str, 
+                   n: int | None,
+                   mcq_benchmark_template: str,
+                   make_choice_template: str,
+                   ) -> Task:
+    """
+    A task which carries out your benchmark evaluation.
+
+    Args:
+        json_dataset_path : The path where your dataset is saved
+        n : the number of samples to use for the evaluation (if None then we use all of them)
+        mcq_benchmark_template : This str should specify the instruction, question, and choices. See inspect_evaluation.ipynb notebook for an example
+        make_choice_template : This str should specify how the model should make an answer choice and what format it should respond with.
+
+    Returns:
+        Task : A task which carries out your benchmark evaluation
+    """
+    return Task(
+        dataset=json_dataset(
+            json_file=json_dataset_path,
+            sample_fields=partial(record_to_sample_full, system_prompt_behavior="context"),
+            limit=n,
+        ),
+        solver=chain(
+            multiple_choice_format(template=mcq_benchmark_template),
+            generate(),
+            make_choice(prompt=make_choice_template),
+            generate(),
+        ),
+        scorer=answer("letter"),
+    )
+
+
+@task
+def alignment_eval(
+    json_dataset_path: str,
+    n: int | None,
+    system_prompt_behavior: Literal["system", "context"] | None = "system",
+    use_cot: bool = False,
+    use_self_critique: bool = False,
+    self_critique_model: str | None = "openai/gpt-4o-mini",
+) -> Task:
+    """
+    A task which carries out an evaluation.
+
+    Args:
+        json_dataset_path : The path where your dataset is saved
+        n : the number of samples to use for the evaluation (if None then we use all of them)
+        system_prompt_behavior : The behavior of the system prompt, either "system" or "context"
+        use_cot : Whether to use chain of thought reasoning
+        self_critique_model : The model to use for self-critique
+
+    Returns:
+        Task : A task which carries out your evaluation
+    """
+    dataset = json_dataset(
+        json_file=json_dataset_path,
+        sample_fields=partial(record_to_sample_full, system_prompt_behavior=system_prompt_behavior),
+        limit=n,
+    )
+
+    # If not using chain of throught, then just get the answer directly
+    if not use_cot:
+        assert not use_self_critique, "You can only use self-critique if CoT is enabled."
+        solver = chain(
+            multiple_choice_format(template=TEMPLATE_MCQ),
+            generate(),
+        )
+    else:
+        # If using chain of thought, start by generating CoT and an answer
+        solver = [multiple_choice_format(template=TEMPLATE_MCQ_COT_AND_CHOICE), generate()]
+
+        # If also using self-critique, add this to the solver along with a generation step
+        if use_self_critique:
+            assert self_critique_model is not None, "You must specify a self-critique model if using self-critique."
+            solver = chain(
+                solver,
+                self_critique_format(
+                    model_id=self_critique_model,
+                    critique_template=TEMPLATE_MCQ_CRITIQUE,
+                    critique_completion_template=TEMPLATE_MCQ_CRITIQUE_COMPLETION,
+                ),
+                generate(),
+            )
+
+        # Finally, ask for the answer
+        solver = chain(solver, make_choice(prompt=TEMPLATE_MCQ_MAKE_CHOICE), generate())
+
+    return Task(
+        dataset=dataset,
+        solver=solver,
+        scorer=answer("letter"),
+    )

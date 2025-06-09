@@ -28,7 +28,9 @@ from .inspect_evaluation import (
     letters_and_answer_options,
     multiple_choice_format,
     make_choice,
-    self_critique_format
+    self_critique_format,
+    benchmark_eval,
+    alignment_eval
 )
 
 from .statistical_analysis import (
@@ -60,6 +62,8 @@ __all__ = [
     "multiple_choice_format",
     "make_choice",
     "self_critique_format",
+    "benchmark_eval",
+    "alignment_eval",
     
     # Analysis
     "analyze_bias_patterns",
