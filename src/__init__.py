@@ -18,7 +18,8 @@ from .question_generation import (
     retry_with_exponential_backoff,
     generate_structured_response,
     generate_structured_responses_with_threadpool,
-    filter_dataset
+    filter_dataset,
+    generate_and_score_questions
 )
 
 from .inspect_evaluation import (
@@ -53,6 +54,7 @@ __all__ = [
     "generate_structured_response",
     "generate_structured_responses_with_threadpool",
     "filter_dataset",
+    "generate_and_score_questions",
     
     # Evaluation
     "record_to_sample",

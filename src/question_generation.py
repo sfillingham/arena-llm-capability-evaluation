@@ -6,6 +6,7 @@ from tabulate import tabulate # type: ignore
 import instructor # type: ignore
 from anthropic import Anthropic #type: ignore
 from concurrent.futures import ThreadPoolExecutor
+from pydantic import BaseModel
 
 Message: TypeAlias = dict[Literal["role", "content"], str]
 Messages: TypeAlias = list[Message]
@@ -171,20 +172,88 @@ def generate_structured_responses_with_threadpool(
     return list(results)
 
 
-class QCResponse(BaseModel):
-    explanation: str
-    score: int
+# class QCResponse(BaseModel):
+#     explanation: str
+#     score: int
 
 
-class QCQuestion(BaseModel):
-    question: Question
-    response: QCResponse
+# class QCQuestion(BaseModel):
+#     question: Question
+#     response: QCResponse
 
 
-def filter_dataset(dataset: list[QCQuestion], min_score: int) -> list[QCQuestion]:
+# def filter_dataset(dataset: list[QCQuestion], min_score: int) -> list[QCQuestion]:
+#     """
+#     Returns a filtered dataset, based on the minimum and maximum score.
+#     """
+#     return [q for q in dataset if q.response.score >= min_score]
+
+
+def generate_and_score_questions(
+    num_qs: int = 20,
+    model=model,
+    version: int = 0,
+    system_prompt: str = SYSTEM_PROMPT,
+    user_prompt: str = USER_PROMPT,
+    few_shot_examples: list[str] = FEWSHOT_EXAMPLES,
+    var_prompts: list[str] = TOPICS,
+    rubric: str = RUBRIC,
+    scoring_examples: list[QCQuestion] = SCORING_EXAMPLES,
+) -> list[QCQuestion]:
     """
-    Returns a filtered dataset, based on the minimum and maximum score.
+    Generate and score a set of questions, and saves the results to a JSON file.
+
+    Most of the code here should just be copy-pasted from earlier exercises, and combined together to form a single
+    function.
     """
-    return [q for q in dataset if q.response.score >= min_score]
+    # Get prompts for question generation
+    gen_prompts = GenPrompts(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        few_shot_examples=few_shot_examples,
+        p_var=1.0,
+        var_prompts=var_prompts,
+    )
+    messages_list = [gen_prompts.get_messages() for _ in range(num_qs)]
+
+    # Generate responses (i.e. the new questions), as lists of dicts
+    questions_to_score = generate_structured_responses_with_threadpool(model, 
+                                                                       messages_list, 
+                                                                       response_format=Question,
+                                                                       temperature=0.7)
+
+    # Create our scoring messages (one for each of the new questions)
+    messages = [{"role": "system", "content": rubric}]
+    for ex in scoring_examples:
+        messages.append({"role": "user", "content": ex.question.model_dump_json()})
+        messages.append({"role": "assistant", "content": ex.response.model_dump_json()})
+    messages_list = [messages + [{"role": "user", "content": json.dumps(q)}] for q in questions_to_score]
+
+    # Get model responses & scores
+    responses = generate_structured_responses_with_threadpool(
+        model=model, messages_list=messages_list, response_format=QCResponse, max_workers=1
+    )
+
+    # Combine the questions and responses
+    dataset = [
+        QCQuestion(question=Question(**question), response=response)
+        for question, response in zip(questions_to_score, responses)
+    ]
+
+    # Save the dataset to a JSON file, as well as all the constants
+    data = {
+        "dataset": [q.model_dump() for q in dataset],
+        "RUBRIC": rubric,
+        "SCORING_EXAMPLES": [ex.model_dump() for ex in scoring_examples],
+        "FEWSHOT_EXAMPLES": few_shot_examples,
+        "VAR_PROMPTS": var_prompts,
+        "SYSTEM_PROMPT": system_prompt,
+        "USER_PROMPT": user_prompt,
+    }
+    file_path = os.path.join(data_path, f"{topic_title}_{num_q_for_saving}_qs_v{version:02}.json")
+    with open(file_path, "w") as f:
+        json.dump(data, f)
+
+    return dataset
 
 
