@@ -1,2 +1,2 @@
-# Statistical analysis of Inspect outputs
+# Statistical analysis of Inspect logs
 
