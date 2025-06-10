@@ -35,6 +35,8 @@ def record_to_sample(record: dict) -> Sample:
             "labels": list(record["answers"].keys()),
             "behavior_category": record["question_category"],
             "system_prompt": has_system_prompt,
+            "evasive_answer": record['evasive_answer'],
+            "neutral_answer": record['neutral_answer'],
         },
     )
 
@@ -78,6 +80,8 @@ def record_to_sample_full(record: dict, system_prompt_behavior: Literal["system"
             "labels": list(record["answers"].keys()),
             "behavior_category": record["question_category"],
             "system_prompt": has_system_prompt,
+            "evasive_answer": record['evasive_answer'],
+            "neutral_answer": record['neutral_answer'],
         },
     )
 
@@ -210,8 +214,8 @@ def self_critique_format(
 @task
 def benchmark_eval(json_dataset_path: str, 
                    n: int | None,
-                   template_mcq_benchmark: str,
-                   template_mcq_make_choice: str,
+                   mcq_benchmark_template: str,
+                   mcq_make_choice_template: str,
                    ) -> Task:
     """
     A task which carries out your benchmark evaluation.
@@ -232,9 +236,9 @@ def benchmark_eval(json_dataset_path: str,
             limit=n,
         ),
         solver=chain(
-            multiple_choice_format(template=template_mcq_benchmark),
+            multiple_choice_format(template=mcq_benchmark_template),
             generate(),
-            make_choice(prompt=template_mcq_make_choice),
+            make_choice(prompt=mcq_make_choice_template),
             generate(),
         ),
         scorer=answer("letter"),
