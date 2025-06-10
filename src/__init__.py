@@ -35,9 +35,7 @@ from .inspect_evaluation import (
 )
 
 from .statistical_analysis import (
-    analyze_bias_patterns,
-    calculate_bias_metrics,
-    generate_comparison_report
+    split_eval_samples,
 )
 
 from .utils import (
@@ -68,9 +66,7 @@ __all__ = [
     "alignment_eval",
     
     # Analysis
-    "analyze_bias_patterns",
-    "calculate_bias_metrics",
-    "generate_comparison_report",
+    "split_eval_samples",
     
     # Utilities
     "add_few_shot_examples",
