@@ -23,4 +23,14 @@ pip install -r requirements.txt
 ```
 
 ## Current Results and Ongoing Work
+Initial results:
+- Developed political bias eval and tested it on three models: GPT-4o-mini, GPT-4.1-mini, and Claude 3.7 Sonnet.
+- Current results are being analyzed, however a couple interesting VERY preliminary results:
+    - Whenever the model chose a biased answer it was liberal leaning, suggesting a liberal bias in the models.
+- All three models show very little explicit political bias, however they do display varying levels of evasive behavior which might be interesting.
+
+Ongoing Work:
+- Finish preliminary statistical analysis
+- Vary the prompt methods to attempt to elicit political bias
+- Further test on other models: Claude Sonnet 4, Claude Opus 4, Grok, Minstral, etc.
 
