@@ -32,5 +32,5 @@ Initial results:
 Ongoing Work:
 - Finish preliminary statistical analysis
 - Vary the prompt methods to attempt to elicit political bias
-- Further test on other models: Claude Sonnet 4, Claude Opus 4, Grok, Minstral, etc.
+- Further test on other models: Claude Sonnet 4, Claude Opus 4, Grok 3, etc.
 
