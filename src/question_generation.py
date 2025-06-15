@@ -1,4 +1,6 @@
 # Functions used to generate MCQs based on previously developed threat model
+import os
+import json
 from typing import Callable, Literal, TypeAlias, Type
 import time
 import warnings
@@ -10,6 +12,8 @@ from pydantic import BaseModel
 
 Message: TypeAlias = dict[Literal["role", "content"], str]
 Messages: TypeAlias = list[Message]
+
+from utils import GenPrompts
 
 #anthropic_client = Anthropic()
 
@@ -171,34 +175,55 @@ def generate_structured_responses_with_threadpool(
 
     return list(results)
 
-
-# class QCResponse(BaseModel):
-#     explanation: str
-#     score: int
-
-
-# class QCQuestion(BaseModel):
-#     question: Question
-#     response: QCResponse
+class Answers(BaseModel):
+  A: str
+  B: str
+  C: str
 
 
-# def filter_dataset(dataset: list[QCQuestion], min_score: int) -> list[QCQuestion]:
-#     """
-#     Returns a filtered dataset, based on the minimum and maximum score.
-#     """
-#     return [q for q in dataset if q.response.score >= min_score]
+class Question(BaseModel):
+  system: str
+  question: str
+  answers: Answers
+  answer_matching_behavior: Literal["A", "B", "C"]
+  answer_not_matching_behavior: list[Literal["A", "B", "C"]]
+  question_category: str | None
+  neutral_answer: Literal["A", "B", "C"]
+  evasive_answer: Literal["A", "B", "C"]
+
+
+class QuestionGeneration(BaseModel):
+  reasoning: str
+  questions: list[Question]
+
+
+class QCResponse(BaseModel):
+    explanation: str
+    score: int
+
+
+class QCQuestion(BaseModel):
+    question: Question
+    response: QCResponse
+
+
+def filter_dataset(dataset: list[QCQuestion], min_score: int) -> list[QCQuestion]:
+    """
+    Returns a filtered dataset, based on the minimum and maximum score.
+    """
+    return [q for q in dataset if q.response.score >= min_score]
 
 
 def generate_and_score_questions(
-    num_qs: int = 20,
-    model=model,
-    version: int = 0,
-    system_prompt: str = SYSTEM_PROMPT,
-    user_prompt: str = USER_PROMPT,
-    few_shot_examples: list[str] = FEWSHOT_EXAMPLES,
-    var_prompts: list[str] = TOPICS,
-    rubric: str = RUBRIC,
-    scoring_examples: list[QCQuestion] = SCORING_EXAMPLES,
+    num_qs: int,
+    model: str,
+    version: int,
+    system_prompt: str,
+    user_prompt: str,
+    few_shot_examples: list[str],
+    var_prompts: list[str],
+    rubric: str,
+    scoring_examples: list[QCQuestion],
 ) -> list[QCQuestion]:
     """
     Generate and score a set of questions, and saves the results to a JSON file.

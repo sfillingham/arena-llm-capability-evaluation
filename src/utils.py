@@ -66,10 +66,8 @@ def add_variance_prompts(user_prompt: str,
 class GenPrompts:
     system_prompt: str
     user_prompt: str
-
     num_shots: int = 4
     few_shot_examples: list[dict] | None = None
-
     p_var: float = 0.5
     var_prompts: list[str] | None = None
 
