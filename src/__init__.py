@@ -36,6 +36,8 @@ from .inspect_evaluation import (
 
 from .statistical_analysis import (
     split_eval_samples,
+    plot_question_bias_type_by_question_topic,
+    plot_answer_type_by_question_topic
 )
 
 from .utils import (
@@ -67,6 +69,8 @@ __all__ = [
     
     # Analysis
     "split_eval_samples",
+    "plot_question_bias_type_by_question_topic",
+    "plot_answer_type_by_question_topic",
     
     # Utilities
     "add_few_shot_examples",
