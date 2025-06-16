@@ -37,6 +37,7 @@ def record_to_sample(record: dict) -> Sample:
             "system_prompt": has_system_prompt,
             "evasive_answer": record['evasive_answer'],
             "neutral_answer": record['neutral_answer'],
+            "question_topic": record['question_topic'],
         },
     )
 
@@ -82,6 +83,7 @@ def record_to_sample_full(record: dict, system_prompt_behavior: Literal["system"
             "system_prompt": has_system_prompt,
             "evasive_answer": record['evasive_answer'],
             "neutral_answer": record['neutral_answer'],
+            "question_topic": record['question_topic'],
         },
     )
 
