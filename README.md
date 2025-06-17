@@ -23,14 +23,21 @@ pip install -r requirements.txt
 ```
 
 ## Current Results and Ongoing Work
+Models Evaluated:
+- GPT-4o-mini
+- GPT-4.1-mini
+- Claude Sonnet 3.7
+- Claude Sonnet 4
+
 Initial results:
-- Developed political bias eval and tested it on three models: GPT-4o-mini, GPT-4.1-mini, and Claude 3.7 Sonnet.
+- Developed political bias threat model and evaluation.
 - Current results are being analyzed, however a couple of interesting, VERY preliminary results:
-    - Whenever the model chose a biased answer it was liberal leaning, suggesting a liberal bias in the models.
-    - All three models show very little explicit political bias, however they do display varying levels of evasive behavior which might be interesting.
+    - All models show little to no significant political bias
+    - Whenever a model does chose a biased answer, it was liberal leaning, suggesting a low-level, liberal bias in certain models for certain question topics.
+    - All models do display varying levels of evasive behavior which will be further explored and likely demonstrates post-training security features.
 
 Ongoing Work:
-- Finish preliminary statistical analysis
-- Vary the prompt methods to attempt to elicit political bias
-- Further test on other models: Claude Sonnet 4, Claude Opus 4, Grok 3, etc.
+- Finish preliminary statistical analysis.
+- Vary the prompt methods to attempt to elicit political bias and bypass the safety training.
+- Further test on other models: Claude Opus 4, Grok 3, etc.
 
